@@ -1,7 +1,7 @@
-from pathlib import Path
+
 
 class byteTokenizer:
-    def __init__(self, file_path: Path):
+    def __init__(self, file_path: str):
         with open(file_path, 'r', encoding='utf-8') as f:
             self.text = f.read()
         

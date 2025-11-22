@@ -1,0 +1,31 @@
+data:
+  path: "Data/Ramayan.txt"
+  context_length: 256
+  batch_size: 64
+
+training:
+  precision: "float16"
+  max_iters: 50000
+  eval_iters: 200
+  log_interval: 50
+  device: "cuda"
+  grad_clip: 1.0
+  learning_rate: 6e-4
+  warmup_iters: 2000
+  min_lr: 6e-5
+  weight_decay: 0.1
+
+model:
+  n_block: 8
+  n_head: 8
+  d_model: 512
+  dropout: 0.1
+  best_model: "runs/best_model.pt"
+
+save:
+  ckpt_dir: "runs"
+
+generation:
+  max_new_token: 2000
+  top_k: 50
+  temperature: 0.9

@@ -60,7 +60,15 @@ class Block(nn.Module):
 ## multi block architecture - GPT
 
 class TinyGPT(nn.Module):
-    def __init__(self, vocab_size: int, context_length: int, n_block: int = 4, n_head: int = 4, d_model: int = 256, dropout: float = 0.0):
+    def __init__(
+        self, 
+        vocab_size: int, 
+        context_length: int, 
+        n_block: int = 4, 
+        n_head: int = 4, 
+        d_model: int = 256, 
+        dropout: float = 0.0
+    ):
         super().__init__()
         self.embedings = nn.Embedding(vocab_size, d_model)
         self.d_model = d_model
@@ -85,7 +93,11 @@ class TinyGPT(nn.Module):
     
     
         
-    def forward(self, idx: torch.Tensor, targets: Optional[torch.Tensor]=None):
+    def forward(
+        self, 
+        idx: torch.Tensor, 
+        targets: Optional[torch.Tensor]=None
+    ):
         B, T = idx.shape
         if T > self.context_length:
             idx = idx[:, -self.context_length:]
@@ -101,3 +113,58 @@ class TinyGPT(nn.Module):
             loss = F.cross_entropy(logits.flatten(0, 1), targets.flatten())
             
         return logits, loss
+    
+    @torch.no_grad()
+    def generate(
+        self,
+        prompt: str = "",
+        max_new_tokens: int = 200,
+        temperature: float = 1.0,
+        top_k: Optional[int] = None,
+        top_p: Optional[int] = None,
+        tokenizer=None,
+        stream: bool = False  
+    ):
+        self.eval()
+        if tokenizer is None:
+            raise ValueError("Tokenizer must be provided.")
+            
+        idx = tokenizer.encode(prompt)
+        idx = torch.tensor([idx], dtype=torch.long, device=next(self.parameters()).device)
+
+        # Generation loop
+        for _ in range(max_new_tokens):
+            # Crop context
+            idx_cond = idx if idx.size(1) <= self.context_length else idx[:, -self.context_length:]
+            
+            # Forward pass
+            logits, _ = self(idx_cond)
+            logits = logits[:, -1, :] / max(temperature, 1e-6)
+            
+            # Sampling (Top-K / Top-P)
+            if top_k is not None and top_k > 0:
+                v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
+                logits[logits < v[:, [-1]]] = -float('Inf')
+
+            if top_p is not None and top_p < 1.0:
+                sorted_logits, sorted_indices = torch.sort(logits, descending=True)
+                cumulative_probs = torch.softmax(sorted_logits, dim=-1).cumsum(dim=-1)
+                sorted_indices_to_remove = cumulative_probs > top_p
+                sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
+                sorted_indices_to_remove[..., 0] = 0
+                indices_to_remove = sorted_indices_to_remove.scatter(1, sorted_indices, sorted_indices_to_remove)
+                logits[indices_to_remove] = -float('Inf')
+
+            probs = torch.softmax(logits, dim=-1)
+            next_token = torch.multinomial(probs, num_samples=1)
+            
+            # Append to sequence
+            idx = torch.cat([idx, next_token], dim=1)
+
+            # using yeild to generate the token
+            if stream:
+                yield int(next_token.item())
+
+        # 
+        if not stream:
+            return tokenizer.decode(idx[0].tolist())

@@ -1,32 +1,33 @@
 import torch
-from pathlib import Path
+from torch.utils.data import Dataset, DataLoader, random_split
 from tokenizer import byteTokenizer
 
-class DatasetLoad:
-    def __init__(self, path: Path, context_length: int, batch_size: int, device: str = "cpu"):
+
+class DatasetLoad(Dataset):
+    def __init__(self, path: str, context_length: int):
         self.tokenizer = byteTokenizer(path)
         self.data = torch.tensor(self.tokenizer.encode(self.tokenizer.text), dtype=torch.long)
-        self.vocab_size = self.tokenizer.vocab_size
         self.context_length = context_length
-        self.batch_size = batch_size
-        self.device = device
-        n = int(0.8 *len(self.data))
-        self.train_data = self.data[:n]
-        self.val_data = self.data[n:]
 
-    def get_batch(self, split: str = 'train'):
-        """        
-        Returns a batch of input-target pairs for next-token prediction.
-        split: 'train' or 'val' (for training/validation split)
-        """
-        
-        data = self.val_data if split == "val" else self.train_data
-        data = self.data  
+    def __len__(self):
+        return len(self.data)-self.context_length
 
-        ix = torch.randint(0, len(data) - self.context_length - 1, (self.batch_size,))
+    def __getitem__(self, idx):
+        x = self.data[idx:idx+self.context_length]
+        y = self.data[idx+1:idx+self.context_length+1]
+        return x, y
 
-        
-        x = torch.stack([data[i:i+self.context_length] for i in ix])
-        y = torch.stack([data[i+1:i+self.context_length+1] for i in ix])
+    
+def create_Dataloader(path: str, batch_size: int, context_length: int, train: float=0.8):
+    dataset = DatasetLoad(path, context_length)
+    n = len(dataset)
+    train_size = int(n * train)
+    val_size = n - train_size
 
-        return x.to(self.device), y.to(self.device)
+    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=True)
+
+    return train_loader, val_loader, dataset
+    
