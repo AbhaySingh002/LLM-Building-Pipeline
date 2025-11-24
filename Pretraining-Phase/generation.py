@@ -1,5 +1,5 @@
 import torch
-from GPT import TinyGPT
+from gptv1.GPT import TinyGPT
 from tokenizer import byteTokenizer
 from config import load_config
 

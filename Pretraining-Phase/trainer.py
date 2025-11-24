@@ -1,8 +1,8 @@
 from config import load_config
 from utils import create_Dataloader, DatasetLoad
-from GPT import TinyGPT
+from gptv1.GPT import TinyGPT
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import time
 import torch
 from torch.optim import AdamW

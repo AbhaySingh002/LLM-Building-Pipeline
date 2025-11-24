@@ -158,6 +158,12 @@ class TinyGPT(nn.Module):
             probs = torch.softmax(logits, dim=-1)
             next_token = torch.multinomial(probs, num_samples=1)
             
+            
+            ## we can also apply the beam search along the logits probability
+            # implementaion of beam search
+            
+            
+            
             # Append to sequence
             idx = torch.cat([idx, next_token], dim=1)
 
