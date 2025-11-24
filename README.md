@@ -1,6 +1,6 @@
 # LLM Building Pipeline
 
-![Python Version](https://img.shields.io/badge/python-3.11%2B-blue)  ![License](https://img.shields.io/badge/license-MIT-green)  ![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)
+![Python Version](https://img.shields.io/badge/python-3.11%2B-blue)  ![License](https://img.shields.io/badge/license-MIT-green)
 
 **End-to-end LLM pipeline** from tokenization and data prep to Transformer pretraining, SFT, reward modeling, RLHF, and PPO. Includes architecture improvements from base Transformers to MoE and other modern designs. Fully modular, educational, and customizable for building advanced LLMs.
 
