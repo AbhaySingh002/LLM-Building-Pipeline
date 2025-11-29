@@ -9,12 +9,12 @@ from torch.optim import AdamW
 from torch import autocast, GradScaler
 from pathlib import Path
 
-cfg = load_config()
+cfg = load_config(str(Path(__file__).parent / "config.yaml"))
 
 DATA_PATH = cfg.data.path
 CONTEXT_LENGTH = cfg.data.context_length
 BATCH_SIZE = cfg.data.batch_size
-DEVICE = cfg.data.device if torch.cuda.is_available() else "cpu"
+DEVICE = cfg.training.device if torch.cuda.is_available() else "cpu"
 
 PRECISION = cfg.training.precision
 MAX_ITERS = cfg.training.max_iters
